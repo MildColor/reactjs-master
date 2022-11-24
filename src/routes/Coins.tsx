@@ -1,10 +1,14 @@
+import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import React, { Key, useEffect, useState } from "react";
+import PaginationLib from "react-js-pagination";
+
 import { Link } from "react-router-dom";
 import styled, { keyframes } from "styled-components";
+import { fetchCoins } from "./api";
 
 // 타입은 다 소문자로, String(new string) 과 string은 다르다.
-interface CoinInterface {
+interface ICoin {
   id: string;
   name: string;
   symbol: string;
@@ -15,16 +19,21 @@ interface CoinInterface {
 }
 
 function Coins() {
-  const [coins, setCoins] = useState<CoinInterface[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [page, setPage] = useState(1);
 
-  useEffect(() => {
-    (async () => {
-      const { data } = await axios("https://api.coinpaprika.com/v1/coins");
-      setCoins(data.slice(0, 100));
-    })();
-    setIsLoading(false);
-  }, []);
+  //@tanstack/react-query에서 useQuery를 사용할때 query key의 값은 대괄호로 묶어줘야합니다
+  const { isLoading, data } = useQuery<ICoin[]>(["allCoins"], fetchCoins, {
+    // 데이터 refetch 될 때, 이전 데이터를 유지하는 지를 정하는 옵션.
+    keepPreviousData: true,
+    refetchOnWindowFocus: true,
+    // 캐시데이터의 유효기간
+    staleTime: 60000,
+  });
+
+  const handlePageChange = (page: number) => {
+    //백엔드 api에서 page를 지원하지 않는다면 data를 slice해볼만하다.
+    setPage(page);
+  };
   return (
     <Container>
       <Header>
@@ -34,7 +43,7 @@ function Coins() {
         "Loading..."
       ) : (
         <CoinsList>
-          {coins?.map((coin) => (
+          {data?.slice(page * 10 - 9, page * 10).map((coin) => (
             <Coin key={coin.id}>
               <Link to={`/${coin.id}`} state={coin.name}>
                 <Img
@@ -46,6 +55,17 @@ function Coins() {
           ))}
         </CoinsList>
       )}
+      <StPagenation>
+        <PaginationLib
+          activePage={page}
+          itemsCountPerPage={10}
+          totalItemsCount={450}
+          pageRangeDisplayed={5}
+          prevPageText={"‹"}
+          nextPageText={"›"}
+          onChange={handlePageChange}
+        />
+      </StPagenation>
     </Container>
   );
 }
@@ -94,9 +114,25 @@ const Img = styled.img`
   margin-right: 10px;
 `;
 
-const Loader = styled.span`
+const StPagenation = styled.div`
   display: flex;
-  align-items: center;
+  width: 100%;
+  justify-content: center;
+  color: white;
+  margin: 0 auto;
+
+  ul {
+    list-style: none;
+    width: 100%;
+  }
+  li {
+    float: left;
+    margin: 0 10px;
+    padding: 10px;
+  }
+  a {
+    color: white;
+  }
 `;
 // const SkeletonItem = styled.div`
 //   display: flex;

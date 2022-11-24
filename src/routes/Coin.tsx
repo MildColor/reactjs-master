@@ -1,14 +1,14 @@
 import axios from "axios";
 import { useState, useEffect } from "react";
 import { Link, Outlet, useMatch } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 
 import { useLocation, useParams } from "react-router";
 import styled from "styled-components";
-import Chart from "./Chart";
-import Price from "./Price";
+import { fetchCoinInfo } from "./api";
 
 function Coin() {
-  const [loading, setLoading] = useState(true);
+  // const [loading, setLoading] = useState(true);
 
   // Link로 보낸 정보들을 useLocation을 이용해서 받아올 수 있다.
   // 그리고 react-router-dom v6에서는 제네릭을 지원하지 않는다.
@@ -42,6 +42,7 @@ function Coin() {
     first_data_at: string;
     last_data_at: string;
   }
+
   interface PriceData {
     id: string;
     name: string;
@@ -75,29 +76,21 @@ function Coin() {
       };
     };
   }
+  //쿼리 기능이 변수에 의존하는 경우 쿼리 키에 포함합니다
+  const { isLoading: infoLoading, data: infoData } = useQuery<InfoData>(
+    ["info", coinId],
+    () => fetchCoinInfo(coinId)
+  );
+  const { isLoading: tickersLoading, data: tickersData } = useQuery<PriceData>(
+    ["tickers", coinId],
+    () => fetchCoinInfo(coinId)
+  );
 
-  const [info, setInfo] = useState<InfoData>();
-  const [priceInfo, setPriceInfo] = useState<PriceData>();
-
-  useEffect(() => {
-    (async () => {
-      const infoRes = await axios.get(
-        `https://api.coinpaprika.com/v1/coins/${coinId}`
-      );
-      const infoData = infoRes.data;
-      setInfo(infoData);
-      const priceRes = await axios.get(
-        `https://api.coinpaprika.com/v1/tickers/${coinId}`
-      );
-      const priceData = priceRes.data;
-      setPriceInfo(priceData);
-      setLoading(false);
-    })();
-  }, [coinId]);
+  const loading = tickersLoading || infoLoading;
   return (
     <Container>
       <Header>
-        <Title>{state || "Loading..."}</Title>
+        <Title>{state ? state : loading ? "Loading..." : infoData?.name}</Title>
       </Header>
       {loading ? (
         <Loader>Loading...</Loader>
@@ -106,26 +99,26 @@ function Coin() {
           <Overview>
             <OverviewItem>
               <span>Rank:</span>
-              <span>{info?.rank}</span>
+              <span>{infoData?.rank}</span>
             </OverviewItem>
             <OverviewItem>
               <span>Symbol:</span>
-              <span>${info?.symbol}</span>
+              <span>${infoData?.symbol}</span>
             </OverviewItem>
             <OverviewItem>
               <span>Open Source:</span>
-              <span>{info?.open_source ? "Yes" : "No"}</span>
+              <span>{infoData?.open_source ? "Yes" : "No"}</span>
             </OverviewItem>
           </Overview>
-          <Description>{info?.description}</Description>
+          <Description>{infoData?.description}</Description>
           <Overview>
             <OverviewItem>
               <span>Total Suply:</span>
-              <span>{priceInfo?.total_supply}</span>
+              <span>{tickersData?.total_supply}</span>
             </OverviewItem>
             <OverviewItem>
               <span>Max Supply:</span>
-              <span>{priceInfo?.max_supply}</span>
+              <span>{tickersData?.max_supply}</span>
             </OverviewItem>
           </Overview>
           <Tabs>
