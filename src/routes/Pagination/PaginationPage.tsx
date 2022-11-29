@@ -3,13 +3,7 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import Pagination from "./Pagination";
 import styled from "styled-components";
-
-type jsonPlaceHolderData = {
-  userId: number;
-  id: number;
-  title: string;
-  completed: boolean;
-};
+import { jsonPlaceHolderData } from "../../types";
 
 function PaginationPage() {
   const pageChangeFn = () => {};
