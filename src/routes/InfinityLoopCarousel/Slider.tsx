@@ -11,7 +11,7 @@ function Slider() {
   const [transition, setTransition] = useState("");
   const slidesLength = slides.length;
   const transitionTime = 500;
-  const transitionStyle = `transform ${transitionTime}ms ease in out 2s`;
+  const transitionStyle = `transform ${transitionTime}ms ease 0s`;
 
   const handleSwipe = (direction: number) => {
     let index = currentIndex + direction;
@@ -59,7 +59,6 @@ function Slider() {
     setTimeout(() => {
       setTransition("");
       setCurrentIndex(index);
-      console.log(currentIndex);
     }, transitionTime);
   }
 
@@ -89,6 +88,7 @@ function Slider() {
             className="slider-track"
             slidesLength={slidesLength}
             currentIndex={currentIndex}
+            transition={transition}
           >
             {slides.map((slide, slideIndex) => {
               const itemIndex = getItemIndex(slideIndex);
@@ -120,12 +120,16 @@ const StList = styled.div`
   transform: translate(-50%, -50%); */
 `;
 
-const StTrack = styled.div<{ slidesLength: number; currentIndex: number }>`
+const StTrack = styled.div<{
+  slidesLength: number;
+  currentIndex: number;
+  transition: string;
+}>`
   display: flex;
   height: 300px;
   align-items: center;
   position: absolute;
-  transition: all 0.3s ease-in-out;
+  transition: ${({ transition }) => transition};
   transform: ${({ slidesLength, currentIndex }) =>
     `translateX(${(-100 / slidesLength) * (0 + currentIndex)}%)`};
   .current-slide {
@@ -139,7 +143,7 @@ const StItem = styled.div<{ color: string; transition: string }>`
   height: 300px;
   background-color: ${(props) => props.color};
   border: 10px solid black;
-  transition: ${({ transition }) => transition};
+  /* transition: ${({ transition }) => transition}; */
 `;
 
 const SlideButton = styled.button``;
